@@ -27,5 +27,17 @@
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
+
+    fetch('output/county-tract.geojson')
+      .then(r => r.json())
+      .then((layer) => {
+        L.geoJSON(layer, {
+          onEachFeature: (feature, layer) => {
+            layer.on('click', () => {});
+          },
+          style: (feature) => ({ fillColor: '#000000', fillOpacity: 0.40, opacity: 0 })
+        }).addTo(map);
+      });
+
   </script>
 </body>
