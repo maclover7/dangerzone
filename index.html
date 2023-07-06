@@ -5,7 +5,7 @@
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
 
-   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
 
@@ -68,21 +68,25 @@
 
     // Add info
     const info = L.control();
-    info.onAdd = (map) => {
+    info.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'info header');
       this.update();
       return this._div;
     };
 
-    info.update = (props) => {
-      const contents = props ? `
+    info.update = function (props) {
+      var contents;
+      if (props) {
+        contents = `
         <b>Of the ${props['Total Properties'].toLocaleString()} residential properties in tract ${props.NAME}:</b><br />
         <ul>
         <li>FEMA includes <b>${props['Properties in SFHA']} (${Math.round(props['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
-        <li>FSF includes <b>${props['Properties in FSF 100 Year Zone, 2023']} (${Math.round(props['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>
-        ` : 'Hover over a census tract to check its risk';
+        <li>FSF includes <b>${props['Properties in FSF 100 Year Zone, 2023']} (${Math.round(props['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>`;
+      } else {
+        contents = 'Hover over a census tract to check its risk';
+      }
 
-        this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${contents}`;
+      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${contents}`;
     };
 
     info.addTo(map);
