@@ -11,6 +11,11 @@
 
    <style>
      #map { height: 90vh; }
+     .info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; }
+     .header { width: 25vw; line-height: normal; }
+     .leaflet-control { background: white; }
+     .legend { border: 5px; text-align: left; line-height: 18px; color: black; }
+     .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 1; }</style>
    </style>
 </head>
 
@@ -44,18 +49,67 @@
       });
 
       layer.bringToFront();
+      info.update(layer.feature.properties);
     };
 
-    const resetHighlight = (e) => tractLayer.resetStyle(e.target);
+    const resetHighlight = (e) => {
+      tractLayer.resetStyle(e.target);
+      info.update();
+    };
 
     const zoomToFeature = (e) => map.fitBounds(e.target.getBounds());
 
+    // Add tile layer
     L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
 
+    // Add info
+    const info = L.control();
+    info.onAdd = (map) => {
+      this._div = L.DomUtil.create('div', 'info header');
+      this.update();
+      return this._div;
+    };
+
+    info.update = (props) => {
+      const contents = props ? `
+        <b>Of the ${props['Total Properties'].toLocaleString()} residential properties in tract ${props.NAME}:</b><br />
+        <ul>
+        <li>FEMA includes <b>${props['Properties in SFHA']} (${Math.round(props['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
+        <li>FSF includes <b>${props['Properties in FSF 100 Year Zone, 2023']} (${Math.round(props['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>
+        ` : 'Hover over a census tract to check its risk';
+
+        this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${contents}`;
+    };
+
+    info.addTo(map);
+
+    // Add legend
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = (map) => {
+      const div = L.DomUtil.create('div', 'info legend');
+      const grades = [0, 0.20, 0.40, 0.60, 0.80];
+
+      const labels = [];
+      let from, to;
+
+      for (let i = 0; i < grades.length; i++) {
+        from = grades[i];
+        to = grades[i + 1];
+
+        labels.push(`<i style="background:${pctStyle(from + 0.01)}"></i> ${from*100}${to ? '' : '%'}${to ? `&ndash;${to*100}%` : '+'}`);
+      }
+
+      div.innerHTML = labels.join('<br>');
+      return div;
+    };
+
+    legend.addTo(map);
+
+    // Add map data
     fetch('output/county-tract-proprisk.geojson')
       .then(r => r.json())
       .then((layer) => {
