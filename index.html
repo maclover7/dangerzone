@@ -11,7 +11,6 @@
 
    <style>
      #map { height: 90vh; }
-
    </style>
 </head>
 
@@ -30,8 +29,26 @@
         //pct_fsf > 0.40  ? '#FEB24C' :
         pct_fsf > 0.20  ? '#FED976' :
         //pct_fsf > 0.20  ? '#FFEDA0';// :
-        '';
+        'white';
     };
+    var tractLayer;
+
+    // Event behavior
+    const highlightFeature = (e) => {
+      const layer = e.target;
+      layer.setStyle({
+        weight: 5,
+        fillColor: '#666',
+        dashArray: '5',
+        fillOpacity: 0.7
+      });
+
+      layer.bringToFront();
+    };
+
+    const resetHighlight = (e) => tractLayer.resetStyle(e.target);
+
+    const zoomToFeature = (e) => map.fitBounds(e.target.getBounds());
 
     L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
@@ -42,11 +59,19 @@
     fetch('output/county-tract-proprisk.geojson')
       .then(r => r.json())
       .then((layer) => {
-        L.geoJSON(layer, {
+        tractLayer = L.geoJSON(layer, {
           onEachFeature: (feature, layer) => {
-            layer.on('click', () => {});
+            layer.on({
+              mouseover: highlightFeature,
+              mouseout: resetHighlight,
+              click: zoomToFeature
+            });
           },
-          style: (feature) => ({ fillColor: pctStyle(feature.properties['100yrpropriskpct_fsf']), fillOpacity: 0.40, opacity: 0 })
+          style: (feature) => ({
+            fillColor: pctStyle(feature.properties['100yrpropriskpct_fsf']),
+            fillOpacity: 0.40,
+            color: 'black',
+          })
         }).addTo(map);
       });
   </script>
