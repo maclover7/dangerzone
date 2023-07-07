@@ -9,6 +9,11 @@
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
    <style>
      #map { height: 90vh; }
      .info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; }
@@ -75,18 +80,21 @@
     };
 
     info.update = function (props) {
-      var contents;
+      var results;
       if (props) {
-        contents = `
+        results = `
         <b>Of the ${props['Total Properties'].toLocaleString()} residential properties in tract ${props.NAME}:</b><br />
         <ul>
         <li>FEMA includes <b>${props['Properties in SFHA']} (${Math.round(props['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
         <li>FSF includes <b>${props['Properties in FSF 100 Year Zone, 2023']} (${Math.round(props['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>`;
       } else {
-        contents = 'Hover over a census tract to check its risk';
+        results = '';
       }
 
-      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${contents}`;
+      const search = 'Click the search icon below and enter your address';
+
+      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${search}<br>${results}`;
+      setTimeout(() => map.fire('search-loaded'), 1000);
     };
 
     info.addTo(map);
@@ -119,9 +127,11 @@
       .then((layer) => {
         tractLayer = L.geoJSON(layer, {
           onEachFeature: (feature, layer) => {
+            layer._turfFeature = turf.feature(feature.geometry);
+
             layer.on({
-              mouseover: highlightFeature,
-              mouseout: resetHighlight,
+              //mouseover: highlightFeature,
+              //mouseout: resetHighlight,
               click: zoomToFeature
             });
           },
@@ -132,5 +142,32 @@
           })
         }).addTo(map);
       });
+
+    // Add location search hooks
+    L.Control.geocoder({
+      defaultMarkGeocode: false
+    })
+      .on('markgeocode', function(e) {
+        const { geocode: result } = e;
+
+        map.setView(result.center, 15);
+
+        if (window._geocodeMarker) {
+          map.removeLayer(window._geocodeMarker);
+        }
+
+        window._geocodeMarker = new L.Marker(result.center)
+          .bindPopup(result.html || result.name)
+          .addTo(map)
+          .openPopup();
+
+        const turfPoint = turf.point([result.center.lng, result.center.lat]);
+        map.eachLayer((l) => {
+          if (l._turfFeature && turf.booleanPointInPolygon(turfPoint, l._turfFeature)) {
+            highlightFeature({ target: l });
+          }
+        });
+      })
+      .addTo(map);
   </script>
 </body>
