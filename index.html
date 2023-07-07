@@ -27,7 +27,7 @@
 
 <body>
   <div style="margin-left: 5%;">
-    <h3>Check the 100-year storm flood risk of your neighborhood</h3>
+    <h3>Check the estimated 100-year storm flood risk of your neighborhood</h3>
     <h6>Click on a neighborhood, or use the search icon below to enter your address</h6>
   </div>
 
@@ -114,7 +114,7 @@
               <b>Of the ${feature.properties['Total Properties'].toLocaleString()} residential properties in tract ${feature.properties.NAME}:</b><br />
               <ul>
                 <li>FEMA includes <b>${feature.properties['Properties in SFHA']} (${Math.round(feature.properties['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
-                <li>FSF includes <b>${feature.properties['Properties in FSF 100 Year Zone, 2023']} (${Math.round(feature.properties['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>
+                <li>FSF includes <b>${feature.properties['Properties in FSF 100 Year Zone, 2023']} (${Math.round(feature.properties['100yrpropriskpct_fsf'] * 100)}%)</b> in its estimated floodplain</li>
               </ul>
             `);
 
