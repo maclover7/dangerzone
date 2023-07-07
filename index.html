@@ -54,15 +54,16 @@
       });
 
       layer.bringToFront();
-      info.update(layer.feature.properties);
     };
 
     const resetHighlight = (e) => {
       tractLayer.resetStyle(e.target);
-      info.update();
     };
 
-    const zoomToFeature = (e) => map.fitBounds(e.target.getBounds());
+    const zoomToFeature = (e) => {
+      map.fitBounds(e.target.getBounds());
+      e.target.openPopup();
+    };
 
     // Add tile layer
     L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}{r}.png', {
@@ -75,26 +76,8 @@
     const info = L.control();
     info.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'info header');
-      this.update();
+      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2><br>Click the search icon below and enter your address`;
       return this._div;
-    };
-
-    info.update = function (props) {
-      var results;
-      if (props) {
-        results = `
-        <b>Of the ${props['Total Properties'].toLocaleString()} residential properties in tract ${props.NAME}:</b><br />
-        <ul>
-        <li>FEMA includes <b>${props['Properties in SFHA']} (${Math.round(props['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
-        <li>FSF includes <b>${props['Properties in FSF 100 Year Zone, 2023']} (${Math.round(props['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>`;
-      } else {
-        results = '';
-      }
-
-      const search = 'Click the search icon below and enter your address';
-
-      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2>${search}<br>${results}`;
-      setTimeout(() => map.fire('search-loaded'), 1000);
     };
 
     info.addTo(map);
@@ -129,9 +112,17 @@
           onEachFeature: (feature, layer) => {
             layer._turfFeature = turf.feature(feature.geometry);
 
+            layer.bindPopup(`
+              <b>Of the ${feature.properties['Total Properties'].toLocaleString()} residential properties in tract ${feature.properties.NAME}:</b><br />
+              <ul>
+                <li>FEMA includes <b>${feature.properties['Properties in SFHA']} (${Math.round(feature.properties['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
+                <li>FSF includes <b>${feature.properties['Properties in FSF 100 Year Zone, 2023']} (${Math.round(feature.properties['100yrpropriskpct_fsf'] * 100)}%)</b> in its floodplain</li>
+              </ul>
+            `);
+
             layer.on({
-              //mouseover: highlightFeature,
-              //mouseout: resetHighlight,
+              mouseover: highlightFeature,
+              mouseout: resetHighlight,
               click: zoomToFeature
             });
           },
@@ -149,22 +140,19 @@
     })
       .on('markgeocode', function(e) {
         const { geocode: result } = e;
-
         map.setView(result.center, 15);
 
         if (window._geocodeMarker) {
           map.removeLayer(window._geocodeMarker);
         }
 
-        window._geocodeMarker = new L.Marker(result.center)
-          .bindPopup(result.html || result.name)
-          .addTo(map)
-          .openPopup();
+        window._geocodeMarker = new L.Marker(result.center).addTo(map);
 
         const turfPoint = turf.point([result.center.lng, result.center.lat]);
         map.eachLayer((l) => {
           if (l._turfFeature && turf.booleanPointInPolygon(turfPoint, l._turfFeature)) {
             highlightFeature({ target: l });
+            zoomToFeature({ target: l });
           }
         });
       })
