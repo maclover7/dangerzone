@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <head>
   <title>mva21</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
@@ -15,9 +17,8 @@
   <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
 
    <style>
-     #map { height: 90vh; }
+     #map { height: 87vh; }
      .info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; }
-     .header { width: 25vw; line-height: normal; }
      .leaflet-control { background: white; }
      .legend { border: 5px; text-align: left; line-height: 18px; color: black; }
      .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 1; }</style>
@@ -25,11 +26,18 @@
 </head>
 
 <body>
-  <p>Flood Analysis</p>
+  <div style="margin-left: 5%;">
+    <h3>Check the 100-year storm flood risk of your neighborhood</h3>
+    <h6>Click on a neighborhood, or use the search icon below to enter your address</h6>
+  </div>
+
   <div id="map"></div>
 
   <script>
-    const map = L.map('map').setView([40.4406, -79.9959], 12);
+    const map = L.map('map', { zoomControl: false }).setView([40.4406, -79.9959], 12);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+
     const pctStyle = (pct_fsf) => {
       return pct_fsf > 0.80 ? '#800026' :
         //pct_fsf > 0.60  ? '#BD0026' :
@@ -61,7 +69,7 @@
     };
 
     const zoomToFeature = (e) => {
-      map.fitBounds(e.target.getBounds());
+      map.fitBounds(e.target.getBounds(), { maxZoom: 15 });
       e.target.openPopup();
     };
 
@@ -71,16 +79,6 @@
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
-
-    // Add info
-    const info = L.control();
-    info.onAdd = function (map) {
-      this._div = L.DomUtil.create('div', 'info header');
-      this._div.innerHTML = `<h2>Check the 100-year storm flood risk of your neighborhood</h2><br>Click the search icon below and enter your address`;
-      return this._div;
-    };
-
-    info.addTo(map);
 
     // Add legend
     const legend = L.control({ position: 'bottomright' });
