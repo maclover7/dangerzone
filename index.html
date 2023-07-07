@@ -108,8 +108,8 @@
             layer.bindPopup(`
               <b>Of the ${feature.properties['Total Properties'].toLocaleString()} residential properties in tract ${feature.properties.NAME}:</b><br />
               <ul>
-                <li>FEMA includes <b>${feature.properties['Properties in SFHA']} (${Math.round(feature.properties['100yrpropriskpct_sfha'] * 100)}%)</b> in its floodplain</li>
-                <li>FSF includes <b>${feature.properties['Properties in FSF 100 Year Zone, 2023']} (${Math.round(feature.properties['100yrpropriskpct_fsf'] * 100)}%)</b> in its estimated floodplain</li>
+                <li>FEMA official floodplain: <b>${feature.properties['Properties in SFHA']} (${Math.round(feature.properties['100yrpropriskpct_sfha'] * 100)}%)</b></li>
+                <li>First Street estimated floodplain: <b>${feature.properties['Properties in FSF 100 Year Zone, 2023']} (${Math.round(feature.properties['100yrpropriskpct_fsf'] * 100)}%)</b></li>
               </ul>
             `);
 
